@@ -2,10 +2,10 @@ require 'torch'
 require 'nn'
 require 'optim'
 require 'xlua'
---require 'logroll'
+require 'logroll'
 
 
---logger = logroll.print_logger()
+cmdLogger = logroll.print_logger()
 
 
 cmdParser = torch.CmdLine()
@@ -37,12 +37,12 @@ end
 function main(opts)
 
 	if string.len(opts.train) == 0 then
-		logger.error('must specify train data')
+		cmdLogger.error('must specify train data')
 		os.exit(1)
 	end
 
 	if string.len(opts.test) == 0 then
-		logger.error('must specify test data')
+		cmdLogger.error('must specify test data')
 		os.exit(1)
 	end
 
@@ -76,12 +76,12 @@ function main(opts)
 	   nesterov=false
 	}
 
-	for i=1,1e2 do
+	for i=1,opts.iter do
 
 		local time = sys.clock()
 		local shuffle = torch.randperm(trainX:size(1))
 
-		print('start iter ' .. i)
+		cmdLogger.info('start iter ' .. i)
 		for startidx=1,trainX:size(1),batchsize do
 
 			local inputs = {}
@@ -131,10 +131,11 @@ function main(opts)
 		local testLoss = eval_model(model, criterion, testX, testY)
 		loggerForTest:add{testLoss}
 
-		print('\neach sample costs ' .. (time / trainX:size(1))*1000 .. ' ms')
-		print('train loss is ' .. epochsLoss / (trainX:size(1)))
-		print('test loss is ' .. testLoss)
+		cmdLogger.info('\neach sample costs ' .. (time / trainX:size(1))*1000 .. ' ms')
+		cmdLogger.info('train loss is ' .. epochsLoss / (trainX:size(1)))
+		cmdLogger.info('test loss is ' .. testLoss)
 	end
+
 	loggerForTest:style{'-'}
 	loggerForTest:plot()
 
@@ -143,4 +144,3 @@ function main(opts)
 end
 
 main(opt)
-
