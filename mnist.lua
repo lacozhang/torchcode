@@ -18,8 +18,10 @@ cmdParser:option('-batch', 10, 'minibatch size')
 cmdParser:option('-lr', 1e-3, 'learning rate')
 cmdParser:option('-lrd', 1e-4, 'learning rate decay')
 cmdParser:option('-wd', 0, 'l2 regularization parameter')
+cmdParser:option('-thread', 2, 'number of threads for running')
 
 opt = cmdParser:parse(arg or {})
+
 
 function load_data(datafilepath)
 	local data = torch.load(datafilepath, 'ascii')
@@ -46,6 +48,8 @@ function main(opts)
 		os.exit(1)
 	end
 
+    torch.setnumthreads(opt.thread)
+    cmdLogger.info(torch.getnumthreads())
 
 	logger = optim.Logger('mnist.log')
 	logger:setNames{'train loss'}
@@ -114,7 +118,7 @@ function main(opts)
 				local gradCriterion = criterion:backward(modelout, targets)
 				model:backward(inputs, gradCriterion)
 
---				gradParams:div((#indextable)[1])
+				gradParams:div((#indextable)[1])
 
 				return avgloss, gradParams
 			end
@@ -131,7 +135,7 @@ function main(opts)
 		local testLoss = eval_model(model, criterion, testX, testY)
 		loggerForTest:add{testLoss}
 
-		cmdLogger.info('\neach sample costs ' .. (time / trainX:size(1))*1000 .. ' ms')
+		cmdLogger.info('each sample costs ' .. (time / trainX:size(1))*1000 .. ' ms')
 		cmdLogger.info('train loss is ' .. epochsLoss / (trainX:size(1)))
 		cmdLogger.info('test loss is ' .. testLoss)
 	end
