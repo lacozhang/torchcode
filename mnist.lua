@@ -2,10 +2,7 @@ require 'torch'
 require 'nn'
 require 'optim'
 require 'xlua'
-require 'logroll'
 
-
-cmdLogger = logroll.print_logger()
 
 
 cmdParser = torch.CmdLine()
@@ -21,6 +18,7 @@ cmdParser:option('-wd', 0, 'l2 regularization parameter')
 cmdParser:option('-thread', 2, 'number of threads for running')
 
 opt = cmdParser:parse(arg or {})
+classes = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'}
 
 
 function load_data(datafilepath)
@@ -33,23 +31,27 @@ end
 
 function eval_model( model, criteria, dataX, dataY )
 	-- body
-	return criteria:forward(model:forward(dataX), dataY)
+	-- return criteria:forward(model:forward(dataX), dataY)
+    local pred = model:forward(dataX)
+    local confusion = optim.ConfusionMatrix(classes)
+    for i=1,dataX:size(1) do
+        confusion:add(pred[i], dataY[i])
+    end
+    print(confusion)
+    return criteria:forward(pred, dataY)
 end
 
 function main(opts)
 
 	if string.len(opts.train) == 0 then
-		cmdLogger.error('must specify train data')
 		os.exit(1)
 	end
 
 	if string.len(opts.test) == 0 then
-		cmdLogger.error('must specify test data')
 		os.exit(1)
 	end
 
     torch.setnumthreads(opt.thread)
-    cmdLogger.info(torch.getnumthreads())
 
 	logger = optim.Logger('mnist.log')
 	logger:setNames{'train loss'}
@@ -85,7 +87,6 @@ function main(opts)
 		local time = sys.clock()
 		local shuffle = torch.randperm(trainX:size(1))
 
-		cmdLogger.info('start iter ' .. i)
 		for startidx=1,trainX:size(1),batchsize do
 
 			local inputs = {}
@@ -135,9 +136,6 @@ function main(opts)
 		local testLoss = eval_model(model, criterion, testX, testY)
 		loggerForTest:add{testLoss}
 
-		cmdLogger.info('each sample costs ' .. (time / trainX:size(1))*1000 .. ' ms')
-		cmdLogger.info('train loss is ' .. epochsLoss / (trainX:size(1)))
-		cmdLogger.info('test loss is ' .. testLoss)
 	end
 
 	loggerForTest:style{'-'}
