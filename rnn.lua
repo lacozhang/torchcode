@@ -277,7 +277,8 @@ for iter=1,params.epochs do
         torch.save(filename, protos)
     end
 
+    local seconds = timer:time().real
     print('avg loss ' .. total_loss / mbsteps)
-    print('epoch costs ' .. timer:time().real .. ' seconds')
-    print('each second train ' .. trainX:size(1)/timer:time().real ' samples')
+    print('epoch costs ' .. seconds .. ' seconds')
+    print('each second train ' .. trainX:size(1)/seconds .. ' samples')
 end
