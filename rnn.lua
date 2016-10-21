@@ -142,6 +142,21 @@ function clone_many_times(net, T)
     return clones
 end
 
+function do_eval(net, data, rnnsize, mbsize)
+    -- evaluate language model perplexity on data
+    -- just assume the form of the output
+    last_hidden = torch.zeros(mbsize, rnnsize)
+    local total_loss = 0
+    for i=1,data.X:size(1) do
+        h, o = unpack(net.rnn:forward({data.X:narrow(1, i, 1):view(mbsize), last_hidden}))
+        loss, _ = net.criteria:forward(o, data.Y:narrow(1, i, 1):view(mbsize))
+        total_loss = total_loss + loss
+        last_hidden = h
+    end
+    total_loss = total_loss / data.X:size(1)
+    return 2 ^ total_loss
+end
+
 -- TODO: there is dropout parameter not used.
 function build_rnn_network(vocab_size, embed_size, rnn_size, sequence_length, minibatch_size, dropout)
 
@@ -176,10 +191,12 @@ local trainX, trainY = build_nn_input(text_train, train_vocab, params.batchsize)
 print('vocab size ' .. vocab_size)
 
 text_valid = load_data( params.valid )
-check_in_vocab(text_valid, train_vocab)
+validX, validY = build_nn_input(text_valid, train_vocab, params.batchsize)
+valid_data = {X = validX, Y = validY}
 
 text_test  = load_data( params.test )
-check_in_vocab(text_test, train_vocab)
+testX, testY = build_nn_input(text_test, train_vocab, params.batchsize)
+test_data = {X = testX, Y = testY}
 
 protos = build_rnn_network(vocab_size, params.embed, params.rnnsize, params.seqlen, params.batchsize, false)
 param, gradParam = protos.rnn:getParameters()
@@ -191,6 +208,11 @@ sgdoptimizer = {learningRate = params.lr, learningRateDecay=params.lrd}
 
 for iter=1,params.epochs do
 
+    -- evaluate model perplexity on valida & test data
+    local valid_perp = do_eval(protos, valid_data, params.rnnsize, params.batchsize)
+    local test_perp = do_eval(protos, test_data, params.rnnsize, params.batchsize)
+    print('validation set perplexity : ' .. valid_perp)
+    print('test set perplexity       : ' .. test_perp)
 
     print('start epoch ' .. iter)
     timer:reset()
@@ -211,6 +233,7 @@ for iter=1,params.epochs do
             start_index = end_index - params.seqlen - 1
             init_state = { torch.zeros(params.batchsize, params.rnnsize) }
         end
+        
         
         function feval(x)
 
