@@ -1,0 +1,5 @@
+DataSetPath --train_filename=C:/Users/xinjzhou/10/Train.tsv --test_filename=C:/Users/xinjzhou/CEPEvaluation/CEP_HA_TEST.tsv --dev_filename=C:/Users/xinjzhou/10/Dev.tsv --domain=homeautomation
+ModelFolder --output_path=C:/Users/xinjzhou/result_homeautomation_cep/ --model_name=TestSlotTaggingModel
+CharsEmbedding --chars=True --char_hidden_size=100 dim_char=100
+WordsEmbedding --hidden_size=300 --dim=300
+Train&Infer --crf=True --nepochs=15 --batch_size=20 --dropout=0.5 --LR_method=adam --LR=0.001 --LR_decay=0.9 --clip=-1 --nepoch_no_imprv=3 --reload=False --DEFAULT=O
