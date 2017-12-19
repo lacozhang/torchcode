@@ -171,7 +171,7 @@ class PTBModel(object):
                 zip(grads, tvars),
                 global_step=tf.train.get_or_create_global_step())
         self._new_lr = tf.placeholder(tf.float32, 
-                                      shape=[], name="new learning rate")
+                                      shape=[], name="new_learning_rate")
         self._lr_update = tf.assign(self._lr, self._new_lr)
         
         
@@ -237,7 +237,7 @@ class PTBModel(object):
         outputs = []
         with tf.variable_scope("RNN"):
             for time_step in range(self.num_steps):
-                if time_step>0: tf.get_variable().reuse_variables()
+                if time_step>0: tf.get_variable_scope().reuse_variables()
                 (cell_output, state) = cell(inputs[:, time_step, :], state)
                 outputs.append(cell_output)
         
