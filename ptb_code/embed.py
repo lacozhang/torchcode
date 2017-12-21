@@ -24,7 +24,7 @@ flags.DEFINE_string("data_path",
                     None,
                     "path to train data")
 flags.DEFINE_string("save_path",
-                    None,
+                    "logs",
                     "model output directory")
 flags.DEFINE_bool("use_fp16",
                   False,
@@ -37,9 +37,9 @@ flags.DEFINE_string("rnn_mode",
                     "possible values: CUDNN, BASIC, BLOCK")
 
 FLAGS = flags.FLAGS
-BASIC = "basic"
-CUDNN = "cudnn"
-BLOCK = "block"
+BASIC = "BASIC"
+CUDNN = "CUDNN"
+BLOCK = "BLOCK"
 
 # load data in text format
 class Data(object):    
@@ -117,7 +117,7 @@ class PTBInput(object):
         self.input_data, self.targets = ptb_producer(data,
                                                      batch_size,
                                                      num_steps,
-                                                     name=None)
+                                                     name=name)
 
 class PTBModel(object):
     ''' PTB Model '''
@@ -333,7 +333,7 @@ class SmallConfig(object):
     lr_decay = 0.5
     batch_size = 20
     vocab_size = 10000
-    rnn_mode = CUDNN
+    rnn_mode = BLOCK
 
 class MediumConfig(object):
     """Medium config."""
@@ -505,7 +505,8 @@ def main(_):
             for model in models.values():
                 model.import_ops()
             
-            sv = tf.train.Supervisor(logdir=FLAGS.save_path)
+            sv = tf.train.Supervisor(logdir=FLAGS.save_path, 
+                                     summary_op = tf.summary.merge_all())
             config_proto = tf.ConfigProto(allow_soft_placement=soft_placement)
             
             with sv.managed_session(config=config_proto) as session:
