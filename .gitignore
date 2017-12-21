@@ -2,3 +2,6 @@
 *.eps
 .spyproject/
 *.pyc
+logs/
+log/
+tflog/
