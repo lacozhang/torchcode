@@ -160,7 +160,7 @@ current_loss = 0.0
 all_losses = []
 start_time = time.time()
 
-sgd = optim.SGD(rnn.parameters(), lr=0.001)
+sgd = optim.SGD(rnn.parameters(), lr=0.0005, weight_decay=1e-5)
 criterion = nn.NLLLoss()
 
 def timeSince(oldtime):
