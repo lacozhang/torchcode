@@ -7,3 +7,5 @@ log/
 tflog/
 data/
 text*
+__pycache__
+.DS_Store
