@@ -53,7 +53,7 @@ def modelTrain(model, iterCnts, trainData, devData=None):
     
     lossfunc = nn.CrossEntropyLoss()
     totalLoss = 0.0
-    optimizer = optim.Adam(model.parameters(), lr=1e-2)
+    optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
     for iterIdx in range(iterCnts):
         logger.info(f'Iter: {iterIdx}')

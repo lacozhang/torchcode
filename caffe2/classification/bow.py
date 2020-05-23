@@ -9,10 +9,12 @@ Created on Sun May 10 16:23:25 2020
 import codecs
 import random
 from caffe2.python import workspace, core, model_helper, brew, utils
-from caffe2.python.modeling import initializers
 from caffe2.proto import caffe2_pb2
 from caffe2.python import net_drawer
-from caffe2.python.optimizer import build_sgd
+from caffe2.python.optimizer import (
+    build_sgd,
+    build_adagrad,
+)
 import logging
 import numpy as np
 from IPython import display
@@ -120,17 +122,17 @@ class BOWModel(object):
         
         self.model.AddGradientOperators([self.avgloss])
         
-        build_sgd(
+        build_adagrad(
             self.model,
-            base_learning_rate=0.01,
-            policy="step",
-            stepsize=1,
-            gamma=0.9999,
+            base_learning_rate=1e-2,
+            # policy="step",
+            # stepsize=1,
+            epsilon=1e-6,
         )
         
     def _prepareInput(self, label, words):
         wordsArray = np.array(
-            [[ self.word2idx[w]] for w in words if w in self.word2idx],
+            [[w] for w in words],
             dtype=np.int32,
         )
         if label is not None:
@@ -143,12 +145,14 @@ class BOWModel(object):
         return wordsArray, labelArray
         
 
-    def TrainModel(self, trainData, epochs, devData=None):
+    def TrainModel(self, metaData, trainData, epochs, devData=None):
         workspace.RunNetOnce(self.model.param_init_net)
         logger.info("init Net created")
         netCreated=False
-        iterCnt = 0
+        iterCnt = 0        
         for epochCnt in range(epochs):
+            
+            totalLoss = 0.0
             random.shuffle(trainData)
             logger.info("Epoch: {}".format(epochCnt))
             for (label, words) in trainData:
@@ -166,9 +170,14 @@ class BOWModel(object):
                 
                 workspace.RunNet(self.model.net.Name())
                 
+                exLoss = workspace.FetchBlob("avgloss")
+                totalLoss += exLoss
+                
                 if iterCnt % 1000 == 0:
                     if devData is not None:
                         self.EvaluateAccuracy(devData)
+                        
+            logger.info(f'average loss: {totalLoss/len(trainData)}')
 
     def Predict(self, sentence):
         if not self.create_predict:
@@ -192,7 +201,7 @@ class BOWModel(object):
                 correct_cnt += 1
             total_cnt += 1
 
-        print("Accuracy: {}".format(
+        logger.info("Accuracy: {}".format(
             correct_cnt / total_cnt
         ))
         
@@ -200,18 +209,20 @@ class BOWModel(object):
         
         
 
-trainData = IOUtils(inputFilePath)
-trainData.buildData()
+metaData = IOUtils(inputFilePath)
+metaData.buildData()
 logger.info("Train data preparation finished")
 
-devData = trainData.createDataset(inputDevPath)
+devData = metaData.createDataset(inputDevPath)
+trainData = metaData.createDataset(inputFilePath)
 
-bowModel = BOWModel(trainData.Vocab(), 32, len(trainData.Labels()))
+bowModel = BOWModel(metaData.Vocab(), 32, len(metaData.Labels()))
 bowModel.CreateModel()
 logger.info("Model Creation Finished")
 
 bowModel.TrainModel(
-    trainData.Data(), 
+    metaData,
+    trainData,
     10,
     devData
 )

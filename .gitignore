@@ -1,5 +1,6 @@
 *.log
 *.eps
+*.svg
 .spyproject/
 *.pyc
 logs/
