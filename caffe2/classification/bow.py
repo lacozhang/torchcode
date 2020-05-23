@@ -17,62 +17,17 @@ import logging
 import numpy as np
 from IPython import display
 import copy
+from io_utils import (
+    inputFilePath,
+    inputDevPath,
+    IOUtils
+)
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-inputFilePath = "/Users/edwinzhang/src/nn4nlp-code/data/classes/train.txt"
-inputDevPath = "/Users/edwinzhang/src/nn4nlp-code/data/classes/dev.txt"
 
-
-class IOUtils(object):
-    def __init__(self, file_name):
-        self.fileName=file_name
-        
-    def buildData(self):
-        self.vocab = set()
-        self.nclass = set()
-        self.data = []
-        with codecs.open(self.fileName, mode='r', encoding='utf-8') as textData:
-            for line in textData.readlines():
-                if len(line) < 2:
-                    continue
-
-                label, text = line.strip().split('|||')
-                label = int(label)
-                words = text.split(' ')
-                
-                self.data.append(
-                    (label, words)
-                )
-                
-                for word in words:
-                    self.vocab.add(word)
-                    
-                self.nclass.add(label)
-    
-    def Vocab(self):
-        return self.vocab
-    
-    def Labels(self):
-        return self.nclass
-    
-    def Data(self):
-        return self.data
-    
-    def createDataset(self, inputPath):
-        dataset = []
-        with codecs.open(inputPath, mode='r', encoding='utf-8') as textData:
-            for line in textData.readlines():
-                label, text = line.strip().split('|||')
-                label = int(label)
-                words = text.split(' ')                
-                dataset.append(
-                    (label, words)
-                )
-        
-        return dataset
             
     
 class Utils(object):
