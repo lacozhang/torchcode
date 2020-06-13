@@ -127,7 +127,7 @@ class BOWModel(object):
             base_learning_rate=1e-2,
             # policy="step",
             # stepsize=1,
-            epsilon=1e-6,
+            epsilon=1e-8,
         )
         
     def _prepareInput(self, label, words):
@@ -173,9 +173,8 @@ class BOWModel(object):
                 exLoss = workspace.FetchBlob("avgloss")
                 totalLoss += exLoss
                 
-                if iterCnt % 1000 == 0:
-                    if devData is not None:
-                        self.EvaluateAccuracy(devData)
+            if devData is not None:
+                self.EvaluateAccuracy(devData)
                         
             logger.info(f'average loss: {totalLoss/len(trainData)}')
 
@@ -223,7 +222,7 @@ logger.info("Model Creation Finished")
 bowModel.TrainModel(
     metaData,
     trainData,
-    10,
+    100,
     devData
 )
 

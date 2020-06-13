@@ -52,13 +52,13 @@ class CBOW(nn.Module):
 def modelTrain(model, iterCnts, trainData, devData=None):
     
     lossfunc = nn.CrossEntropyLoss()
-    totalLoss = 0.0
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
 
     for iterIdx in range(iterCnts):
         logger.info(f'Iter: {iterIdx}')
         random.shuffle(trainData)
         model.train()
+        totalLoss = 0.0
         
         for (label, words) in trainData:
             labelTensor = torch.LongTensor(
