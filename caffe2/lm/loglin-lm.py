@@ -59,8 +59,22 @@ class LogLinearModel(object):
         self.bias = self.model.param_init_net.XavierFill(
             [],
             "bias",
-            shape=[self.vocabSize]
+            shape=[1, 1, 1, self.vocabSize]
         )
+        
+        self.mut_s = self.model.param_init_net.ConstantFill(
+            [],
+            "mut_s",
+            value=self.ngram * 1.0,
+            dtype=1,
+            shape=[1, 1, 1, self.vocabSize]
+        )
+        
+        self.mut_no_grad = self.model.net.StopGradient(
+            self.mut_s,
+            self.mut_s
+        )
+        
         for i in range(self.ngram):
             self.inputs.append(
                 self.model.net.AddExternalInput(f"pos_{i}")
@@ -90,13 +104,25 @@ class LogLinearModel(object):
         )
         
         
-        self.logits = brew.average_pool(
+        self.score_avg = brew.average_pool(
             self.model,
             self.last_combine,
-            "logits",
+            "score_avg",
             kernel_h=2, kernel_w=1,
             stride_h=2, stride_w=1
-        )        
+        )
+        
+        self.score_sum =self.model.net.Mul(
+            [self.score_avg, self.mut_s],
+            ["score_sum"],
+            axis=0,
+        )
+        
+        self.logits = self.model.net.Add(
+            [self.score_sum, self.bias],
+            ["logits"],
+            axis=0,
+        )
         
         self.predict_net = core.Net(self.model.net.Proto())
         self.label = self.model.net.AddExternalInput("label")
@@ -167,7 +193,8 @@ class LogLinearModel(object):
                 if cnt % 1000 == 0:
                     logger.info(f"Train {cnt} mini-batches")
 
-                # print(workspace.FetchBlob("combine").shape)                
+                # print(workspace.FetchBlob("avgloss").shape)
+                # print(workspace.FetchBlob("avgloss"))
                 # print(workspace.FetchBlob("average_loglinear").shape)
                 # print(inputData[0])
                 # exit()
