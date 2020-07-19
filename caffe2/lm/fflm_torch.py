@@ -44,9 +44,9 @@ validData = lmData.getValidData(loglinear=True, ngram=HIST_SIZE)
 evalData = lmData.getEvalData(loglinear=True, ngram=HIST_SIZE)
 
 model = FFLM(32, lmData.VocabSize, 128, HIST_SIZE, 0.2)
-loss = nn.NLLLoss()
+loss = nn.CrossEntropyLoss()
 
-optimizer = optim.Adagrad(model.parameters(), lr=1e-4)
+optimizer = optim.Adagrad(model.parameters(), lr=1e-3)
 
 for iter_cnt in range(2):
     random.shuffle(trainData)
